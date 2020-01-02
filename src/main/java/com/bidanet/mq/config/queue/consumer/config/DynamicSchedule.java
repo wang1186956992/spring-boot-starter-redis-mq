@@ -13,6 +13,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.Trigger;
+import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.SchedulingConfigurer;
 import org.springframework.scheduling.config.ScheduledTaskRegistrar;
 import org.springframework.scheduling.support.CronTrigger;
@@ -27,6 +28,7 @@ import java.util.UUID;
 
 @Configuration
 @Slf4j
+@EnableScheduling
 public class DynamicSchedule implements SchedulingConfigurer {
 
     @Autowired
@@ -58,7 +60,7 @@ public class DynamicSchedule implements SchedulingConfigurer {
                     ConsumeWorker worker = new ConsumeWorker(consumeHandlerMethod, consumer);
                     //注册JobDetail
                     String jobDetailBeanName = buildJobDetailBeanName(consumeHandlerMethod);
-                    tasks.add(new Task(UUID.randomUUID().toString(), jobDetailBeanName, "*/30 * * * * *", worker));
+                    tasks.add(new Task(UUID.randomUUID().toString(), jobDetailBeanName, "*/5 * * * * *", worker));
                 }
             }
         }
