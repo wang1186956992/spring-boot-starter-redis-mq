@@ -3,11 +3,13 @@ spring-boot-starter-redis-mq
 
 
 
+使用前：
 
-使用前保证需要注入
-
-    @Autowired
-    JedisPool jedisPool;
+在启动类上 
+@EnableScheduling
+需要注入
+@Autowired
+JedisPool jedisPool;
 
 
 ```
