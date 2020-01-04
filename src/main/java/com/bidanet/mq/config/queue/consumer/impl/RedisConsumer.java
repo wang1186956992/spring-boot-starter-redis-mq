@@ -6,8 +6,8 @@ import com.bidanet.mq.config.queue.util.JedisUtil;
 import redis.clients.jedis.JedisPool;
 
 /**
- * @author ScienJus
- * @date 2015/12/8.
+ * @author wanglu
+ * @date 2020/1/4.
  */
 public class RedisConsumer implements Consumer {
 

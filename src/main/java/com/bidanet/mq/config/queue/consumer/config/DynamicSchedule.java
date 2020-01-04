@@ -5,15 +5,16 @@ import com.bidanet.mq.config.queue.consumer.annotation.OnMessage;
 import com.bidanet.mq.config.queue.consumer.model.ConsumeHandlerMethod;
 import com.bidanet.mq.config.queue.consumer.model.Task;
 import com.bidanet.mq.config.queue.consumer.worker.ConsumeWorker;
+import com.bidanet.mq.config.queue.producer.Producer;
+import com.bidanet.mq.config.queue.producer.model.RetryTask;
+import com.bidanet.mq.config.queue.producer.worker.RetryProducerWorker;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.Trigger;
-import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.SchedulingConfigurer;
 import org.springframework.scheduling.config.ScheduledTaskRegistrar;
 import org.springframework.scheduling.support.CronTrigger;
@@ -26,9 +27,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+/**
+ * @author wanglu
+ * @date 2020/1/4.
+ */
+
 @Configuration
 @Slf4j
-@EnableScheduling
 public class DynamicSchedule implements SchedulingConfigurer {
 
     @Autowired
@@ -36,6 +41,15 @@ public class DynamicSchedule implements SchedulingConfigurer {
 
     @Autowired
     private Consumer consumer;
+
+    @Autowired
+    private Producer producer;
+
+    @Autowired
+    private RetryProducerWorker retryProducerWorker;
+
+    @Autowired
+    JedisPool jedisPool;
 
 
     /**
@@ -57,10 +71,10 @@ public class DynamicSchedule implements SchedulingConfigurer {
                 if (method.isAnnotationPresent(OnMessage.class)) {
                     OnMessage onMessage = method.getAnnotation(OnMessage.class);
                     ConsumeHandlerMethod consumeHandlerMethod = new ConsumeHandlerMethod(onMessage.topic(), method, bean);
-                    ConsumeWorker worker = new ConsumeWorker(consumeHandlerMethod, consumer);
+                    ConsumeWorker worker = new ConsumeWorker(jedisPool,consumeHandlerMethod, consumer,producer);
                     //注册JobDetail
                     String jobDetailBeanName = buildJobDetailBeanName(consumeHandlerMethod);
-                    tasks.add(new Task(UUID.randomUUID().toString(), jobDetailBeanName, "*/5 * * * * *", worker));
+                    tasks.add(new Task(UUID.randomUUID().toString(),jobDetailBeanName,"*/30 * * * * *",worker));
                 }
             }
         }
@@ -68,8 +82,8 @@ public class DynamicSchedule implements SchedulingConfigurer {
 
 
     @PreDestroy
-    public void destroy() {
-        System.out.println("destroy.........");
+    public void destroy(){
+        log.info("destroy.........");
 
     }
 
@@ -85,7 +99,7 @@ public class DynamicSchedule implements SchedulingConfigurer {
             //任务执行线程
             Runnable runnable = () -> {
                 log.info("execute task {}", task.getId());
-                task.getWorker().invoke();
+                    task.getWorker().invoke();
             };
 
             //任务触发器
@@ -99,5 +113,23 @@ public class DynamicSchedule implements SchedulingConfigurer {
             scheduledTaskRegistrar.addTriggerTask(runnable, trigger);
         });
 
+        /**
+         * 添加重试任务线程
+         */
+        RetryTask retryTask = new RetryTask(UUID.randomUUID().toString(), "retryTask", "*/30 * * * * *", retryProducerWorker);
+        //任务触发器
+        Trigger trigger = triggerContext -> {
+            //获取定时触发器，这里可以每次从数据库获取最新记录，更新触发器，实现定时间隔的动态调整
+            CronTrigger cronTrigger = new CronTrigger(retryTask.getCron());
+            return cronTrigger.nextExecutionTime(triggerContext);
+        };
+
+        //任务执行线程
+        Runnable runnable = () -> {
+            log.info("execute task {}", retryTask.getId());
+            retryTask.getRetryProducerWorker().worker();
+        };
+        //注册任务
+        scheduledTaskRegistrar.addTriggerTask(runnable, trigger);
     }
 }

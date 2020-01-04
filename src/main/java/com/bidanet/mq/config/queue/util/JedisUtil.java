@@ -4,8 +4,8 @@ import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 
 /**
- * @author XieEnlong
- * @date 2015/12/9.
+ * @author wanglu
+ * @date 2020/1/4.
  */
 public class JedisUtil {
 
@@ -26,6 +26,57 @@ public class JedisUtil {
         try {
             jedis = jedisPool.getResource();
             return SerializeUtil.unserialize(jedis.rpop(key.getBytes()));
+        } finally {
+            if (jedis != null) {
+                jedis.close();
+            }
+        }
+    }
+
+
+    public static boolean exists(JedisPool jedisPool, String key) {
+        Jedis jedis = null;
+        try {
+            jedis = jedisPool.getResource();
+            return jedis.exists(key);
+        } finally {
+            if (jedis != null) {
+                jedis.close();
+            }
+        }
+    }
+
+    public static void set(JedisPool jedisPool, String key, Object value) {
+
+        Jedis jedis = null;
+        try {
+            jedis = jedisPool.getResource();
+            jedis = jedisPool.getResource();
+            jedis.set(key.getBytes(), SerializeUtil.serialize(value));
+        } finally {
+            if (jedis != null) {
+                jedis.close();
+            }
+        }
+    }
+
+    public static Object get(JedisPool jedisPool, String key) {
+        Jedis jedis = null;
+        try {
+            jedis = jedisPool.getResource();
+            return SerializeUtil.unserialize(jedis.get(key.getBytes()));
+        } finally {
+            if (jedis != null) {
+                jedis.close();
+            }
+        }
+    }
+
+    public static void del(JedisPool jedisPool, String key) {
+        Jedis jedis = null;
+        try {
+            jedis = jedisPool.getResource();
+            jedis.del(key.getBytes());
         } finally {
             if (jedis != null) {
                 jedis.close();

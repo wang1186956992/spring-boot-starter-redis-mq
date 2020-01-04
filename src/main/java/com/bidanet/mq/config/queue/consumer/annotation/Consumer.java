@@ -5,8 +5,8 @@ import org.springframework.stereotype.Component;
 import java.lang.annotation.*;
 
 /**
- * @author ScienJus
- * @date 2015/12/8.
+ * @author wanglu
+ * @date 2020/1/4.
  */
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)

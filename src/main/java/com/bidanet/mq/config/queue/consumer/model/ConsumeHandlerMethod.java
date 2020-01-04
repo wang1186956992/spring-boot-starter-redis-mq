@@ -3,8 +3,8 @@ package com.bidanet.mq.config.queue.consumer.model;
 import java.lang.reflect.Method;
 
 /**
- * @author ScienJus
- * @date 2015/12/8.
+ * @author wanglu
+ * @date 2020/1/4.
  */
 public class ConsumeHandlerMethod {
 

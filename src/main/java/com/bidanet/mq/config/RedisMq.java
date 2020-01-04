@@ -7,6 +7,7 @@ import com.bidanet.mq.config.queue.consumer.impl.RedisConsumer;
 import com.bidanet.mq.config.queue.producer.Producer;
 import com.bidanet.mq.config.queue.producer.impl.RedisProducer;
 import com.bidanet.mq.config.queue.producer.worker.ProducerWorker;
+import com.bidanet.mq.config.queue.producer.worker.RetryProducerWorker;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -39,6 +40,15 @@ public class RedisMq {
         ProducerWorker producerWorker = new ProducerWorker();
         producerWorker.setProducer(producer());
         return producerWorker;
+    }
+
+    @Bean
+    public RetryProducerWorker retryProducerWorker(){
+        RetryProducerWorker retryProducerWorker = new RetryProducerWorker();
+        retryProducerWorker.setConsumer(consumer());
+        retryProducerWorker.setProducer(producer());
+        retryProducerWorker.setJedisPool(jedisPool);
+        return retryProducerWorker;
     }
 
 

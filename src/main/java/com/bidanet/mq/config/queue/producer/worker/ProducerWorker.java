@@ -1,16 +1,20 @@
 package com.bidanet.mq.config.queue.producer.worker;
 
-import com.bidanet.supermarket.config.queue.model.Message;
-import com.bidanet.supermarket.config.queue.producer.Producer;
-import com.bidanet.supermarket.config.queue.producer.annotation.ToQueue;
+import com.bidanet.mq.config.queue.cost.QueueCost;
+import com.bidanet.mq.config.queue.model.Message;
+import com.bidanet.mq.config.queue.producer.Producer;
+import com.bidanet.mq.config.queue.producer.annotation.ToQueue;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 
+import java.util.UUID;
+
 /**
- * @author ScienJus
- * @date 2015/12/8.
+ * @author wanglu
+ * @date 2020/1/4.
  */
+
 @Aspect
 public class ProducerWorker {
 
@@ -30,7 +34,8 @@ public class ProducerWorker {
                     toQueue.expire() == ToQueue.ExpireTime.NEVER_EXPIRES ?
                             ToQueue.ExpireTime.NEVER_EXPIRES :
                             System.currentTimeMillis() + toQueue.expire() * 1000;
-            producer.sendMessage(topic, new Message(content, expireAt));
+            String uuid = QueueCost.UUID_PREFIX + UUID.randomUUID().toString();
+            producer.sendMessage(topic, new Message(uuid,topic,content, expireAt));
         } catch (Throwable throwable) {
             throwable.printStackTrace();
         }

@@ -3,8 +3,8 @@ package com.bidanet.mq.config.queue.producer.annotation;
 import java.lang.annotation.*;
 
 /**
- * @author ScienJus
- * @date 2015/12/8.
+ * @author wanglu
+ * @date 2020/1/4.
  */
 @Target(ElementType.METHOD)
 @Retention(RetentionPolicy.RUNTIME)

@@ -4,12 +4,10 @@ spring-boot-starter-redis-mq
 
 
 
-
 使用前保证需要注入
 
     @Autowired
     JedisPool jedisPool;
-
 
 
 ```
@@ -174,17 +172,49 @@ public class NewUserConsumer {
         }
     }
 }
+
+目前代码里写死了重试时间
+public class RetryUtil {
+//
+//    one,two,three,four,five;
+
+    /**
+     * 重试机制 5秒  30秒   1分钟    30分钟   1 小时 ，
+     * 超过五次  2小时一次
+     * @param retryNum
+     * @return
+     */
+
+    public static long retryTime(long retryNum){
+        long currentTimeMillis = System.currentTimeMillis();
+
+        switch ((int) retryNum){
+            case 1:
+                return currentTimeMillis + 5000;
+            case 2:
+                return currentTimeMillis + 10000;
+            case 3:
+                return currentTimeMillis + 30000;
+            case 4:
+                return currentTimeMillis + 30000;
+            case 5:
+                return currentTimeMillis + 30000;
+            default:
+                return currentTimeMillis + 30000;
+        }
+    }
+}
+
+
+
+
 ```
 
 当然，如果一个消费方法永远不会失败（或是失败后不需要重试），可以直接设置为`void`方法。
 
 PS：之前版本使用重试次数控制失败处理。但是系统修复需要的是时间，而重试次数很有可能会被浪费掉，因此改为了生存时间。
 
-### 待办事项
 
-- [x] 消息处理失败的处理（重新插入队列，设置消息的生存周期）
-- [ ] 将队列分为两个阶段，等待投递和等待接收
-- [ ] 监控页面
 
 ### 帮助
 
