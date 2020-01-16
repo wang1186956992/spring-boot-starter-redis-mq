@@ -10,7 +10,7 @@ public class QueueCost {
     public static final String RETRY_TOPIC = "retryMessage";
 
 
-    public static final String UUID_PREFIX = "retryMessage";
+    public static final String UUID_PREFIX = "redis.mq.message";
 
 
 

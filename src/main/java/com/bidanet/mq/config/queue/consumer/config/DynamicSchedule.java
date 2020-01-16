@@ -11,6 +11,8 @@ import com.bidanet.mq.config.queue.producer.worker.RetryProducerWorker;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Configuration;
@@ -20,6 +22,7 @@ import org.springframework.scheduling.config.ScheduledTaskRegistrar;
 import org.springframework.scheduling.support.CronTrigger;
 import redis.clients.jedis.JedisPool;
 
+import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -31,25 +34,41 @@ import java.util.UUID;
  * @author wanglu
  * @date 2020/1/4.
  */
-
-@Configuration
 @Slf4j
+@Configuration
+@ConditionalOnBean({                                                    //条件1
+        JedisPool.class,
+        Consumer.class,
+        Producer.class,
+        RetryProducerWorker.class,
+        ApplicationContext.class})
+@ConditionalOnProperty(                                                 //条件2
+        name = {"spring.redis.mq"},
+        havingValue = "true",
+        matchIfMissing = true
+)
 public class DynamicSchedule implements SchedulingConfigurer {
 
-    @Autowired
+    @Autowired(required = false)
     private ApplicationContext applicationContext;
 
-    @Autowired
-    private Consumer consumer;
+    private static JedisPool jedisPool;
 
-    @Autowired
-    private Producer producer;
+    private static Consumer consumer;
 
-    @Autowired
-    private RetryProducerWorker retryProducerWorker;
+    private static Producer producer;
 
-    @Autowired
-    JedisPool jedisPool;
+    private static RetryProducerWorker retryProducerWorker;
+
+
+    @PostConstruct
+    public void init() {
+        jedisPool = applicationContext.getBean(JedisPool.class);
+        consumer = applicationContext.getBean(Consumer.class);
+        producer = applicationContext.getBean(Producer.class);
+        jedisPool = applicationContext.getBean(JedisPool.class);
+        retryProducerWorker = applicationContext.getBean(RetryProducerWorker.class);
+    }
 
 
     /**
@@ -57,7 +76,7 @@ public class DynamicSchedule implements SchedulingConfigurer {
      */
     private List<Task> tasks = new ArrayList<>();
 
-    private void init() {
+    private void initTask() {
         //获得所有消费者Bean
         Map<String, Object> beans = applicationContext.getBeansWithAnnotation(com.bidanet.mq.config.queue.consumer.annotation.Consumer.class);
         //获得Bean Factory
@@ -94,7 +113,7 @@ public class DynamicSchedule implements SchedulingConfigurer {
 
     @Override
     public void configureTasks(ScheduledTaskRegistrar scheduledTaskRegistrar) {
-        init();
+        initTask();
         tasks.forEach(task -> {
             //任务执行线程
             Runnable runnable = () -> {

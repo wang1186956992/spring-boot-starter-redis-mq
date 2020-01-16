@@ -12,6 +12,9 @@ spring-boot-starter-redis-mq
 JedisPool jedisPool;
 
 
+spring.redis.mq=true
+
+
 ```
 package com.bidanet.supermarket.config.redis;
 
